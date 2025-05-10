@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
@@ -16,6 +15,7 @@ import {
 import { Input } from '@/components/ui/input';
 import { Eye, EyeOff } from 'lucide-react';
 import { useToast } from '@/components/ui/use-toast';
+import { useAuth } from '@/contexts/AuthContext';
 
 const formSchema = z.object({
   email: z.string().email({ message: "Please enter a valid email address" }),
@@ -26,6 +26,7 @@ const LoginForm: React.FC = () => {
   const [showPassword, setShowPassword] = React.useState(false);
   const { toast } = useToast();
   const navigate = useNavigate();
+  const { login } = useAuth();
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -35,15 +36,21 @@ const LoginForm: React.FC = () => {
     }
   });
 
-  function onSubmit(values: z.infer<typeof formSchema>) {
-    // In a real app, this would call an authentication API
-    console.log(values);
-    toast({
-      title: "Logged in successfully",
-      description: "Welcome back to PinkLifeLine",
-    });
-    // Redirect to home after successful login
-    navigate('/');
+  async function onSubmit(values: z.infer<typeof formSchema>) {
+    try {
+      await login(values.email, values.password);
+      toast({
+        title: "Logged in successfully",
+        description: "Welcome back to PinkLifeLine",
+      });
+      navigate('/');
+    } catch (error) {
+      toast({
+        title: "Login failed",
+        description: error instanceof Error ? error.message : "Please check your credentials",
+        variant: "destructive"
+      });
+    }
   }
 
   return (

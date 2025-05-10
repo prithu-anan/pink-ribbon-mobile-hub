@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
@@ -16,6 +15,7 @@ import {
 import { Input } from '@/components/ui/input';
 import { Eye, EyeOff } from 'lucide-react';
 import { useToast } from '@/components/ui/use-toast';
+import { useAuth } from '@/contexts/AuthContext';
 
 const formSchema = z.object({
   email: z.string().email({ message: "Please enter a valid email address" }),
@@ -30,6 +30,7 @@ const RegisterForm: React.FC = () => {
   const [showPassword, setShowPassword] = React.useState(false);
   const { toast } = useToast();
   const navigate = useNavigate();
+  const { signup } = useAuth();
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -40,15 +41,21 @@ const RegisterForm: React.FC = () => {
     }
   });
 
-  function onSubmit(values: z.infer<typeof formSchema>) {
-    // In a real app, this would call a registration API
-    console.log(values);
-    toast({
-      title: "Registration successful",
-      description: "Welcome to PinkLifeLine",
-    });
-    // Redirect to home after successful registration
-    navigate('/');
+  async function onSubmit(values: z.infer<typeof formSchema>) {
+    try {
+      await signup(values.email, values.password);
+      toast({
+        title: "Registration successful",
+        description: "Welcome to PinkLifeLine",
+      });
+      navigate('/');
+    } catch (error) {
+      toast({
+        title: "Registration failed",
+        description: error instanceof Error ? error.message : "Please try again",
+        variant: "destructive"
+      });
+    }
   }
 
   return (
